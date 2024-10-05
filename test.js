@@ -20,7 +20,7 @@ container.addEventListener('contextmenu', (event) => {
 const zoomImage = (event, zoomFactor) => {
   const rect = image.getBoundingClientRect();
   const offsetX = event.clientX - rect.left;
-  const offsetY = event.clientY - rect.top;
+  const offsetY = event.clientY - rect.top;x
 
   // Update scale and limit zoom levels
   const newScale = Math.min(Math.max(scale * zoomFactor, 1), 4); // Zoom between 1x and 4x
