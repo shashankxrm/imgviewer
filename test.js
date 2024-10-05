@@ -17,15 +17,25 @@ container.addEventListener('contextmenu', (event) => {
 
 // Function to handle zooming
 const zoomImage = (zoomFactor) => {
+  const rect = image.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+
   // Update scale and limit zoom levels
   const newScale = Math.min(Math.max(scale * zoomFactor, 1), 4); // Zoom between 1x and 4x
-  
-  // Update scale
-  scale = newScale;
 
-  // Apply zoom and keep the image centered
-  image.style.transform = `scale(${scale})`;
-  image.style.transformOrigin = '50% 50%';  // Ensures zoom happens from the center of the image
+  // Calculate the new dimensions of the image
+  const newWidth = rect.width * (newScale / scale);
+  const newHeight = rect.height * (newScale / scale);
+
+  // Check if the new dimensions would cause the image to exceed the container boundaries
+  if (newWidth >= containerRect.width && newHeight >= containerRect.height) {
+    // Update scale
+    scale = newScale;
+
+    // Apply zoom and keep the image centered
+    image.style.transform = `scale(${scale})`;
+    image.style.transformOrigin = '50% 50%';  // Ensures zoom happens from the center of the image
+  }
 };
 
 // Mouse scroll event for zoom
