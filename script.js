@@ -77,12 +77,16 @@ container.addEventListener('mousemove', (event) => {
   // Calculate boundaries
   const rect = image.getBoundingClientRect();
   const containerRect = container.getBoundingClientRect();
-  const maxLeft = (rect.width * scale - containerRect.width) / 2;
-  const maxTop = (rect.height * scale - containerRect.height) / 2;
+
+  // Ensure the image stays within the container bounds
+  const minLeft = Math.min(0, containerRect.width - rect.width * scale);
+  const maxLeft = Math.max(0, containerRect.width - rect.width * scale);
+  const minTop = Math.min(0, containerRect.height - rect.height * scale);
+  const maxTop = Math.max(0, containerRect.height - rect.height * scale);
 
   // Restrict movement within boundaries
-  newLeft = Math.max(-maxLeft, Math.min(maxLeft, newLeft));
-  newTop = Math.max(-maxTop, Math.min(maxTop, newTop));
+  newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
+  newTop = Math.max(minTop, Math.min(maxTop, newTop));
 
   // Update position
   position.left = newLeft;
