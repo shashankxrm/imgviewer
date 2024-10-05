@@ -63,9 +63,23 @@ container.addEventListener('mousemove', (event) => {
   const dx = event.clientX - startX;
   const dy = event.clientY - startY;
 
-  // Calculate new position (no constraints)
-  position.left = offsetX + dx;
-  position.top = offsetY + dy;
+  // Calculate new position
+  let newLeft = offsetX + dx;
+  let newTop = offsetY + dy;
+
+  // Calculate boundaries
+  const rect = image.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  const maxLeft = (rect.width * scale - containerRect.width) / 2;
+  const maxTop = (rect.height * scale - containerRect.height) / 2;
+
+  // Restrict movement within boundaries
+  newLeft = Math.max(-maxLeft, Math.min(maxLeft, newLeft));
+  newTop = Math.max(-maxTop, Math.min(maxTop, newTop));
+
+  // Update position
+  position.left = newLeft;
+  position.top = newTop;
 
   // Apply the transformation
   image.style.transform = `translate(${position.left}px, ${position.top}px) scale(${scale})`;
