@@ -23,17 +23,24 @@ const zoomImage = (event, zoomFactor) => {
   const offsetY = event.clientY - rect.top;
 
   // Update scale and limit zoom levels
-  scale = Math.min(Math.max(scale * zoomFactor, 1), 4); // Zoom between 1x and 4x
+  const newScale = Math.min(Math.max(scale * zoomFactor, 1), 4); // Zoom between 1x and 4x
+
+  // Calculate the new position to keep the image centered
+  position.left = (position.left - offsetX) * (newScale / scale) + offsetX;
+  position.top = (position.top - offsetY) * (newScale / scale) + offsetY;
+
+  // Update scale
+  scale = newScale;
 
   // Apply zoom transformation and scale
   image.style.transform = `translate(${position.left}px, ${position.top}px) scale(${scale})`;
-  image.style.transformOrigin = `${offsetX}px ${offsetY}px`;
+  image.style.transformOrigin = '0 0';
 };
 
 // Mouse scroll event for zoom
 container.addEventListener('wheel', (event) => {
   event.preventDefault();
-  const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1; // Zoom in or out
+  const zoomFactor = event.deltaY > 0 ? 0.95 : 1.05; // Adjust zoom factor for smoother zooming
   zoomImage(event, zoomFactor);
 });
 
