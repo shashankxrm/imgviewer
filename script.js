@@ -85,8 +85,8 @@ container.addEventListener('mousemove', (event) => {
   const maxTop = Math.max(0, containerRect.height - rect.height * scale);
 
   // Restrict movement within boundaries
-  newLeft = Math.max(minLeft, Math.min(maxLeft, newLeft));
-  newTop = Math.max(minTop, Math.min(maxTop, newTop));
+  newLeft = Math.max(minLeft, Math.min(0, newLeft));
+  newTop = Math.max(minTop, Math.min(0, newTop));
 
   // Update position
   position.left = newLeft;
