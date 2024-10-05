@@ -8,6 +8,9 @@ let startY = 0;
 let offsetX = 0;
 let offsetY = 0;
 
+// Add smooth transition for zooming
+image.style.transition = 'transform 0.3s ease';
+
 // Disable right-click context menu inside the container
 container.addEventListener('contextmenu', (event) => {
   event.preventDefault();
