@@ -15,19 +15,18 @@ container.addEventListener('contextmenu', (event) => {
   event.preventDefault();
 });
 
-// Function to check if further zoom-in is possible (i.e., if all sides of the image touch or exceed the container boundaries)
+// Function to check if further zoom-in is possible (i.e., if either side of the image is less than the container boundaries)
 const canZoomIn = (newScale) => {
-  const containerRect = container.getBoundingClientRect();
-  const imageRect = image.getBoundingClientRect();
-
-  const newWidth = imageRect.width * (newScale / scale);
-  const newHeight = imageRect.height * (newScale / scale);
+  const containerWidth = 1000; // Width of the image-viewer
+  const containerHeight = 800; // Height of the image-viewer
+  const imageWidth = image.naturalWidth * newScale;
+  const imageHeight = image.naturalHeight * newScale;
 
   // Check if the new dimensions will exceed the container's dimensions
-  const fitsHorizontally = newWidth >= containerRect.width;
-  const fitsVertically = newHeight >= containerRect.height;
+  const fitsHorizontally = imageWidth >= containerWidth;
+  const fitsVertically = imageHeight >= containerHeight;
 
-  return fitsHorizontally && fitsVertically;
+  return !(fitsHorizontally && fitsVertically);
 };
 
 // Function to handle zooming
@@ -97,5 +96,12 @@ document.addEventListener('mouseup', () => {
 
 // Center the image initially
 window.addEventListener('load', () => {
+  const containerRect = container.getBoundingClientRect();
+  const imageRect = image.getBoundingClientRect();
+  const position = {
+    left: (containerRect.width - imageRect.width) / 2,
+    top: (containerRect.height - imageRect.height) / 2
+  };
+  image.style.transform = `translate(${position.left}px, ${position.top}px) scale(${scale})`;
   image.style.transformOrigin = '50% 50%'; // Set transform origin to the center
 });
