@@ -4,8 +4,11 @@ let scale = 1;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
-let offsetX = 0;
-let offsetY = 0;
+let translateX = 0;
+let translateY = 0;
+
+const CONTAINER_WIDTH = 1000;
+const CONTAINER_HEIGHT = 800;
 
 // Add smooth transition for zooming
 image.style.transition = 'transform 0.3s ease';
@@ -15,41 +18,86 @@ container.addEventListener('contextmenu', (event) => {
   event.preventDefault();
 });
 
-// Function to check if further zoom-in is possible (i.e., if either side of the image is less than the container boundaries)
-const canZoomIn = (newScale) => {
-  const containerWidth = 1000; // Width of the image-viewer
-  const containerHeight = 800; // Height of the image-viewer
-  const imageWidth = image.naturalWidth * newScale;
-  const imageHeight = image.naturalHeight * newScale;
+// Function to calculate the initial scale to fit the image in the container
+const calculateInitialScale = () => {
+  const containerAspectRatio = CONTAINER_WIDTH / CONTAINER_HEIGHT;
+  const imageAspectRatio = image.naturalWidth / image.naturalHeight;
 
-  // Check if the new dimensions will exceed the container's dimensions
-  const fitsHorizontally = imageWidth >= containerWidth;
-  const fitsVertically = imageHeight >= containerHeight;
+  if (imageAspectRatio > containerAspectRatio) {
+    // Image is wider than container, fit based on width
+    return CONTAINER_WIDTH / image.naturalWidth;
+  } else {
+    // Image is taller than container, fit based on height
+    return CONTAINER_HEIGHT / image.naturalHeight;
+  }
+};
 
-  return !(fitsHorizontally && fitsVertically);
+// Function to calculate the maximum allowed scale
+const calculateMaxScale = () => {
+  return Math.max(
+    CONTAINER_WIDTH / image.naturalWidth,
+    CONTAINER_HEIGHT / image.naturalHeight,
+    2 // Set a minimum max scale, e.g., 2x
+  );
 };
 
 // Function to handle zooming
 const zoomImage = (zoomFactor) => {
-  const newScale = Math.min(Math.max(scale * zoomFactor, 1), 4); // Zoom between 1x and 4x
+  const initialScale = calculateInitialScale();
+  const maxScale = calculateMaxScale();
+  const newScale = Math.min(Math.max(scale * zoomFactor, initialScale), maxScale);
 
-  // Prevent further zoom-in if the image is already covering the container
-  if (zoomFactor > 1 && !canZoomIn(newScale)) {
-    return; // Stop zooming in if image exceeds boundaries
+  if (newScale === scale) {
+    return; // No change in scale, so return early
   }
 
-  // Update scale
   scale = newScale;
 
-  // Apply zoom and keep the image centered
-  image.style.transform = `scale(${scale})`;
-  image.style.transformOrigin = '50% 50%';  // Ensures zoom happens from the center of the image
+  // Reset translation when zooming out to initial scale
+  if (scale === initialScale) {
+    translateX = 0;
+    translateY = 0;
+  }
+
+  updateImageTransform();
+};
+
+// Function to update image transform and prevent over-panning
+const updateImageTransform = () => {
+  const imageWidth = image.naturalWidth * scale;
+  const imageHeight = image.naturalHeight * scale;
+
+  // Calculate the maximum translation values to prevent over-panning
+  const maxTranslateX = Math.max(0, (imageWidth - CONTAINER_WIDTH) / 2);
+  const maxTranslateY = Math.max(0, (imageHeight - CONTAINER_HEIGHT) / 2);
+
+  // Prevent over-panning by clamping translateX and translateY within bounds
+  translateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, translateX));
+  translateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, translateY));
+
+  // Apply the translation and scaling
+  image.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+};
+
+// Center the image on initial load
+const centerImage = () => {
+  const initialScale = calculateInitialScale();
+  scale = initialScale;
+
+  const imageWidth = image.naturalWidth * scale;
+  const imageHeight = image.naturalHeight * scale;
+
+  // Center the image by calculating the translateX and translateY
+  translateX = (CONTAINER_WIDTH - imageWidth) / 2;
+  translateY = (CONTAINER_HEIGHT - imageHeight) / 2;
+
+  updateImageTransform();
 };
 
 // Mouse scroll event for zoom
 container.addEventListener('wheel', (event) => {
   event.preventDefault();
-  const zoomFactor = event.deltaY > 0 ? 0.95 : 1.05; // Adjust zoom factor for smoother zooming
+  const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
   zoomImage(zoomFactor);
 });
 
@@ -65,10 +113,8 @@ document.getElementById('zoom-out').addEventListener('click', () => {
 // Mouse down event to start dragging
 container.addEventListener('mousedown', (event) => {
   isDragging = true;
-  startX = event.clientX;
-  startY = event.clientY;
-  offsetX = image.offsetLeft;
-  offsetY = image.offsetTop;
+  startX = event.clientX - translateX;
+  startY = event.clientY - translateY;
   container.style.cursor = 'grabbing';
 });
 
@@ -76,16 +122,13 @@ container.addEventListener('mousedown', (event) => {
 container.addEventListener('mousemove', (event) => {
   if (!isDragging) return;
 
-  const dx = event.clientX - startX;
-  const dy = event.clientY - startY;
+  const newTranslateX = event.clientX - startX;
+  const newTranslateY = event.clientY - startY;
 
-  // Calculate new position
-  const newLeft = offsetX + dx;
-  const newTop = offsetY + dy;
+  translateX = newTranslateX;
+  translateY = newTranslateY;
 
-  // Apply the translation
-  image.style.transform = `translate(${newLeft}px, ${newTop}px) scale(${scale})`;
-  image.style.transformOrigin = '50% 50%'; // Maintain zoom from center
+  updateImageTransform();
 });
 
 // Mouse up event to stop dragging
@@ -94,14 +137,9 @@ document.addEventListener('mouseup', () => {
   container.style.cursor = 'grab';
 });
 
-// Center the image initially
+// Initialize the image and center it
 window.addEventListener('load', () => {
-  const containerRect = container.getBoundingClientRect();
-  const imageRect = image.getBoundingClientRect();
-  const position = {
-    left: (containerRect.width - imageRect.width) / 2,
-    top: (containerRect.height - imageRect.height) / 2
+  image.onload = () => {
+    centerImage();
   };
-  image.style.transform = `translate(${position.left}px, ${position.top}px) scale(${scale})`;
-  image.style.transformOrigin = '50% 50%'; // Set transform origin to the center
 });
